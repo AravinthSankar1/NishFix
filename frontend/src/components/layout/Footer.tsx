@@ -11,7 +11,7 @@ export const Footer: React.FC = () => {
               <div className="p-1.5 rounded-lg bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
                 <Wrench className="w-5 h-5" />
               </div>
-              <span className="text-lg font-bold text-slate-100">FixTech Hub Software Library</span>
+              <span className="text-lg font-bold text-slate-100">NishTech Hub Software Library</span>
             </div>
             <p className="text-sm text-slate-400 max-w-md leading-relaxed">
               Private, high-performance software and firmware repository for mobile phone technicians. Organize, manage, and download Samsung, Xiaomi, Apple, Oppo, Vivo, and MediaTek repair packages via direct download links.

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Wrench, KeyRound, ShieldCheck, AlertCircle, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
+import { Wrench, KeyRound, ShieldCheck, AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -28,11 +28,7 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleFillDemoAdmin = () => {
-    setEmail('admin@repair.local');
-    setPassword('AdminPass123!');
-    setError(null);
-  };
+
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
@@ -119,18 +115,11 @@ export const LoginPage: React.FC = () => {
             </button>
           </form>
 
-          {/* DEMO HELPER BOX */}
+          {/* SECURITY NOTE */}
           <div className="mt-6 pt-5 border-t border-slate-800/80 text-center">
-            <button
-              type="button"
-              onClick={handleFillDemoAdmin}
-              className="w-full p-3 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 text-indigo-300 text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Fill Default Shop Admin Credentials</span>
-            </button>
-            <p className="text-[11px] text-slate-500 mt-2">
-              Default Admin: <span className="font-mono text-slate-400">admin@repair.local</span> | <span className="font-mono text-slate-400">AdminPass123!</span>
+            <p className="text-[11px] text-slate-500 flex items-center justify-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400/60" />
+              Protected admin area — authorized personnel only
             </p>
           </div>
         </div>

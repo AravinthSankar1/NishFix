@@ -70,9 +70,9 @@ Default local `.env` values:
 PORT=5000
 CLIENT_URL=http://localhost:5173
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/repair_software_db?schema=public
-JWT_SECRET=super-secret-jwt-token-key-2026-production!
-ADMIN_EMAIL=admin@repair.local
-ADMIN_PASSWORD=AdminPass123!
+JWT_SECRET=your-jwt-secret-here
+ADMIN_EMAIL=your-admin-email@example.com
+ADMIN_PASSWORD=your-secure-password-here
 ```
 
 ---

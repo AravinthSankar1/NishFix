@@ -5,6 +5,7 @@ import { SoftwareCard } from '../components/software/SoftwareCard';
 import { SearchBar } from '../components/software/SearchBar';
 import { BrandFilters } from '../components/software/BrandFilters';
 import { Wrench, Sparkles, TrendingUp, Layers, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import technicianHero from '../assets/technician-hero.jpg';
 
 export const HomePage: React.FC = () => {
   const [search, setSearch] = useState('');
@@ -40,39 +41,73 @@ export const HomePage: React.FC = () => {
   return (
     <div className="min-h-screen pb-12">
       {/* HERO SECTION */}
-      <section className="relative overflow-hidden pt-12 pb-16 px-4 sm:px-6 lg:px-8 border-b border-slate-800/60 bg-gradient-to-b from-slate-950 via-slate-900/40 to-slate-950">
+      <section className="relative overflow-hidden pt-8 sm:pt-12 pb-12 sm:pb-16 px-4 sm:px-6 lg:px-8 border-b border-slate-800/60 bg-gradient-to-b from-slate-950 via-slate-900/40 to-slate-950">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-indigo-600/10 blur-[120px] pointer-events-none rounded-full" />
 
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold mb-6 shadow-sm">
-            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Official Mobile Phone Repair Software & Firmware Library</span>
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            {/* Left: Text Content */}
+            <div className="text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold mb-6 shadow-sm">
+                <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Official Mobile Phone Repair Software & Firmware Library</span>
+              </div>
+
+              <h1 className="text-2xl sm:text-3xl lg:text-5xl font-extrabold text-slate-100 tracking-tight leading-tight">
+                Find & Download Tested <br className="hidden sm:block" />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-violet-300 to-cyan-400">
+                  Mobile Repair Software Packages
+                </span>
+              </h1>
+
+              <p className="mt-4 text-sm sm:text-base text-slate-400 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+                Search official ROM flashing tools, unbrick utilities, firmware, and repair packages for Samsung, Xiaomi, Apple, Oppo, Vivo, and MediaTek devices.
+              </p>
+
+              {/* SEARCH BAR CONTAINER */}
+              <div className="mt-6 sm:mt-8 max-w-2xl mx-auto lg:mx-0">
+                <SearchBar
+                  value={search}
+                  onChange={(val) => {
+                    setSearch(val);
+                    setPage(1);
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Right: Technician Image */}
+            <div className="relative hidden md:block">
+              <div className="relative rounded-2xl overflow-hidden border border-slate-700/50 shadow-2xl shadow-indigo-900/20 group">
+                <img
+                  src={technicianHero}
+                  alt="Professional mobile phone repair technician at work"
+                  className="w-full h-[320px] lg:h-[380px] object-cover transition-transform duration-700 group-hover:scale-105"
+                  loading="eager"
+                />
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
+                {/* Bottom glassmorphism caption */}
+                <div className="absolute bottom-0 left-0 right-0 p-4 backdrop-blur-sm bg-slate-950/40">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-500 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/30">
+                      <Wrench className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-100">Precision Board-Level Repairs</p>
+                      <p className="text-[11px] text-slate-400">Trusted by professional mobile technicians worldwide</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {/* Decorative glow */}
+              <div className="absolute -top-4 -right-4 w-24 h-24 bg-indigo-600/20 rounded-full blur-2xl pointer-events-none" />
+              <div className="absolute -bottom-4 -left-4 w-20 h-20 bg-cyan-500/15 rounded-full blur-2xl pointer-events-none" />
+            </div>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-100 tracking-tight leading-tight">
-            Find & Download Tested <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-violet-300 to-cyan-400">
-              Mobile Repair Software Packages
-            </span>
-          </h1>
-
-          <p className="mt-4 text-sm sm:text-base text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Search official ROM flashing tools, unbrick utilities, firmware, and repair packages for Samsung, Xiaomi, Apple, Oppo, Vivo, and MediaTek devices.
-          </p>
-
-          {/* SEARCH BAR CONTAINER */}
-          <div className="mt-8 max-w-2xl mx-auto">
-            <SearchBar
-              value={search}
-              onChange={(val) => {
-                setSearch(val);
-                setPage(1);
-              }}
-            />
-          </div>
-
-          {/* BRAND FILTER PILLS */}
-          <div className="mt-6">
+          {/* BRAND FILTER PILLS - Full width below */}
+          <div className="mt-6 sm:mt-8">
             <BrandFilters
               brands={brands}
               selectedBrand={selectedBrand}

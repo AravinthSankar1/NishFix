@@ -25,6 +25,6 @@ export const env = {
   ),
   
   // Default Admin Credentials for automatic seeding
-  ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'admin@repair.local',
-  ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'AdminPass123!',
+  ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'nishadmin@nishtech.hub',
+  ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'NishFix$2026#Secure!',
 };
