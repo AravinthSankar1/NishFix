@@ -1,0 +1,76 @@
+// Prisma Schema for Mobile Phone Repair Software Library
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  SUPERADMIN
+}
+
+enum SoftwareStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Admin {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String   @default("Shop Admin")
+  role         Role     @default(ADMIN)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Software {
+  id               String         @id @default(uuid())
+  brand            String
+  model            String
+  softwareName     String
+  version          String
+  description      String?        @db.Text
+  additionalInfo   String?        @db.Text
+  category         String?        @default("Firmware & Tools")
+  tags             String?        // Comma separated tags
+  compatibility    String?        // Chipset, OS, region, etc.
+  imageObjectKey   String?
+  imageUrl         String?
+  fileObjectKey    String
+  originalFileName String
+  fileSize         BigInt
+  mimeType         String         @default("application/zip")
+  checksum         String?
+  externalUrl      String?        // External mirror hyperlink (Google Drive, Mega, etc.)
+  downloadCount    Int            @default(0)
+  status           SoftwareStatus @default(DRAFT)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  downloadLogs     DownloadLog[]
+
+  @@index([brand])
+  @@index([model])
+  @@index([softwareName])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model DownloadLog {
+  id           String   @id @default(uuid())
+  softwareId   String
+  software     Software @relation(fields: [softwareId], references: [id], onDelete: Cascade)
+  ipAddress    String?
+  userAgent    String?
+  downloadedAt DateTime @default(now())
+
+  @@index([softwareId])
+  @@index([downloadedAt])
+}
