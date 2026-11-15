@@ -12,6 +12,7 @@ datasource db {
 enum Role {
   ADMIN
   SUPERADMIN
+  USER
 }
 
 enum SoftwareStatus {
@@ -30,6 +31,23 @@ model Admin {
   updatedAt    DateTime @updatedAt
 }
 
+model User {
+  id                   String    @id @default(uuid())
+  email                String    @unique
+  passwordHash         String
+  name                 String
+  phone                String?
+  role                 Role      @default(USER)
+  deviceLimit          Int       @default(2)
+  credits              Int       @default(100)
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  uploadedSoftware     Software[]
+}
+
 model Software {
   id               String         @id @default(uuid())
   brand            String
@@ -39,8 +57,10 @@ model Software {
   description      String?        @db.Text
   additionalInfo   String?        @db.Text
   category         String?        @default("Firmware & Tools")
+  subCategory      String?        @default("Mobile Phone")
   tags             String?        // Comma separated tags
   compatibility    String?        // Chipset, OS, region, etc.
+  uploaderName     String?        @default("Official Lab")
   imageObjectKey   String?
   imageUrl         String?
   fileObjectKey    String
@@ -50,9 +70,12 @@ model Software {
   checksum         String?
   externalUrl      String?        // External mirror hyperlink (Google Drive, Mega, etc.)
   downloadCount    Int            @default(0)
-  status           SoftwareStatus @default(DRAFT)
+  status           SoftwareStatus @default(PUBLISHED)
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
+
+  uploadedByUserId String?
+  uploadedByUser   User?          @relation(fields: [uploadedByUserId], references: [id], onDelete: SetNull)
 
   downloadLogs     DownloadLog[]
 
@@ -60,6 +83,7 @@ model Software {
   @@index([model])
   @@index([softwareName])
   @@index([status])
+  @@index([subCategory])
   @@index([createdAt])
 }
 

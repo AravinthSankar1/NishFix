@@ -1,5 +1,17 @@
 export type SoftwareStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
 
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  phone?: string | null;
+  role: 'USER' | 'ADMIN' | 'SUPERADMIN';
+  deviceLimit: number;
+  credits: number;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export interface Software {
   id: string;
   brand: string;
@@ -9,8 +21,10 @@ export interface Software {
   description?: string | null;
   additionalInfo?: string | null;
   category?: string | null;
+  subCategory?: string | null;
   tags?: string | null;
   compatibility?: string | null;
+  uploaderName?: string | null;
   imageObjectKey?: string | null;
   imageUrl?: string | null;
   fileObjectKey: string;
@@ -23,6 +37,12 @@ export interface Software {
   status: SoftwareStatus;
   createdAt: string;
   updatedAt: string;
+  uploadedByUserId?: string | null;
+  uploadedByUser?: {
+    id: string;
+    name: string;
+    email: string;
+  } | null;
 }
 
 export interface AdminUser {
@@ -37,6 +57,7 @@ export interface ApiResponse<T = any> {
   message?: string;
   data: T;
   code?: string;
+  error?: any;
 }
 
 export interface Pagination {
@@ -57,6 +78,14 @@ export interface BrandFilter {
   brand: string;
   count: number;
 }
+
+export interface DataWorksBrandItem {
+  brand: string;
+  count: number;
+  categoryType?: string;
+}
+
+export type DataWorksStructure = Record<string, DataWorksBrandItem[]>;
 
 export interface StorageStats {
   totalFiles: number;
@@ -93,4 +122,12 @@ export interface PresignedDownloadResponse {
   fileName: string;
   softwareName: string;
   version: string;
+}
+
+export interface FileUploadResponse {
+  fileUrl: string;
+  fileName: string;
+  originalName: string;
+  size: number;
+  mimeType: string;
 }

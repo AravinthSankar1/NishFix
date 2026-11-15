@@ -16,7 +16,9 @@ import {
   RefreshCw,
   Loader2,
   Wrench,
+  CircuitBoard,
 } from 'lucide-react';
+import technicianHero from '../assets/technician-hero.jpg';
 
 export const AdminDashboardPage: React.FC = () => {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -44,22 +46,22 @@ export const AdminDashboardPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-extrabold text-slate-100 tracking-tight">
-              Shop Admin Dashboard
+            <h1 className="text-2xl font-extrabold text-white tracking-tight">
+              Tested <span className="text-red-500">File</span> Admin Dashboard
             </h1>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20">
               Overview
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Manage phone repair software, update download URLs, and publish firmware updates.
+            Manage mobile repair software, update direct download mirrors, and publish firmware &amp; schematics.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={() => refetch()}
-            className="p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 transition-colors"
+            className="p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 transition-colors cursor-pointer"
             title="Refresh Dashboard"
           >
             <RefreshCw className="w-4 h-4" />
@@ -67,7 +69,7 @@ export const AdminDashboardPage: React.FC = () => {
 
           <button
             onClick={() => setIsFormModalOpen(true)}
-            className="px-4 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-all cursor-pointer"
+            className="skillby-gradient-btn px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shadow-md"
           >
             <Plus className="w-4 h-4" />
             <span>Add Software Package</span>
@@ -77,7 +79,7 @@ export const AdminDashboardPage: React.FC = () => {
 
       {isLoading && (
         <div className="py-20 text-center">
-          <Loader2 className="w-10 h-10 text-indigo-400 animate-spin mx-auto mb-3" />
+          <Loader2 className="w-10 h-10 text-sky-400 animate-spin mx-auto mb-3" />
           <p className="text-xs text-slate-400">Loading dashboard statistics...</p>
         </div>
       )}
@@ -87,7 +89,7 @@ export const AdminDashboardPage: React.FC = () => {
           <p className="text-sm text-rose-300">Could not connect to backend server or database.</p>
           <button
             onClick={() => refetch()}
-            className="mt-3 px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl"
+            className="mt-3 skillby-gradient-btn px-4 py-2 text-white text-xs font-bold rounded-xl"
           >
             Retry Connection
           </button>
@@ -100,9 +102,9 @@ export const AdminDashboardPage: React.FC = () => {
             <div className="glass-card p-5 rounded-2xl border border-slate-800">
               <div className="flex items-center justify-between text-slate-400 mb-2">
                 <span className="text-xs font-semibold">Total Items</span>
-                <Layers className="w-4 h-4 text-indigo-400" />
+                <Layers className="w-4 h-4 text-sky-400" />
               </div>
-              <div className="text-2xl font-extrabold text-slate-100">{stats.totalSoftware}</div>
+              <div className="text-2xl font-extrabold text-white">{stats.totalSoftware}</div>
               <p className="text-[11px] text-slate-400 mt-1">In software library</p>
             </div>
 
@@ -133,92 +135,154 @@ export const AdminDashboardPage: React.FC = () => {
               <p className="text-[11px] text-slate-400 mt-1">Legacy versions</p>
             </div>
 
-            <div className="glass-card p-5 rounded-2xl border border-indigo-500/20 bg-indigo-500/5">
-              <div className="flex items-center justify-between text-indigo-400 mb-2">
+            <div className="glass-card p-5 rounded-2xl border border-sky-500/20 bg-sky-500/5">
+              <div className="flex items-center justify-between text-sky-400 mb-2">
                 <span className="text-xs font-semibold">Downloads</span>
-                <Download className="w-4 h-4 text-indigo-400" />
+                <Download className="w-4 h-4 text-sky-400" />
               </div>
-              <div className="text-2xl font-extrabold text-indigo-300">
+              <div className="text-2xl font-extrabold text-sky-300">
                 {stats.totalDownloads.toLocaleString()}
               </div>
-              <p className="text-[11px] text-indigo-400/80 mt-1">Total ZIP downloads</p>
+              <p className="text-[11px] text-sky-400/80 mt-1">Total ZIP downloads</p>
             </div>
 
-            <div className="glass-card p-5 rounded-2xl border border-cyan-500/20 bg-cyan-500/5">
-              <div className="flex items-center justify-between text-cyan-400 mb-2">
+            <div className="glass-card p-5 rounded-2xl border border-red-500/20 bg-red-500/5">
+              <div className="flex items-center justify-between text-red-400 mb-2">
                 <span className="text-xs font-semibold">Brands</span>
-                <Smartphone className="w-4 h-4 text-cyan-400" />
+                <Smartphone className="w-4 h-4 text-red-400" />
               </div>
-              <div className="text-2xl font-extrabold text-cyan-300">{stats.totalBrands}</div>
-              <p className="text-[11px] text-cyan-400/80 mt-1">Mobile brands</p>
+              <div className="text-2xl font-extrabold text-red-300">{stats.totalBrands}</div>
+              <p className="text-[11px] text-red-400/80 mt-1">Device manufacturers</p>
             </div>
           </div>
 
-          <div className="glass-card rounded-2xl p-6 border border-slate-800">
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                  <Wrench className="w-4 h-4 text-indigo-400" />
-                  Recently Updated Software Packages
+          {/* QUICK LINKS & RECENT SOFTWARE */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 glass-card p-6 rounded-2xl border border-slate-800 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <CircuitBoard className="w-4 h-4 text-sky-400" /> Recent Software Packages
                 </h3>
-                <p className="text-xs text-slate-400">Latest firmware & repair tool packages</p>
+                <Link
+                  to="/admin/software"
+                  className="text-xs text-sky-400 hover:text-sky-300 font-semibold flex items-center gap-1"
+                >
+                  Manage All <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
               </div>
 
-              <Link
-                to="/admin/software"
-                className="flex items-center gap-1.5 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors"
-              >
-                <span>Manage All Software</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+              {recentSoftware.length === 0 ? (
+                <div className="text-center py-12 text-slate-500 text-xs">
+                  No software packages created yet. Click "Add Software Package" to get started.
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-800/60">
+                  {recentSoftware.map((item) => (
+                    <div key={item.id} className="py-3.5 flex items-center justify-between gap-4">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-xs text-slate-200 truncate">
+                            {item.softwareName}
+                          </span>
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+                            {item.version}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-1">
+                          <span className="font-medium text-sky-400">{item.brand}</span>
+                          <span>•</span>
+                          <span>{item.model}</span>
+                          <span>•</span>
+                          <span>{item.downloadCount} downloads</span>
+                        </div>
+                      </div>
+
+                      <div className="shrink-0">
+                        <StatusBadge status={item.status} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-slate-900/80 text-slate-400 uppercase text-[10px] tracking-wider font-semibold border-b border-slate-800">
-                  <tr>
-                    <th className="py-3 px-4">Software Name</th>
-                    <th className="py-3 px-4">Brand / Model</th>
-                    <th className="py-3 px-4">Version</th>
-                    <th className="py-3 px-4">File Size</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4 text-right">Downloads</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60">
-                  {recentSoftware.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-900/40 transition-colors">
-                      <td className="py-3.5 px-4 font-semibold text-slate-100 flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-indigo-500" />
-                        {item.softwareName}
-                      </td>
-                      <td className="py-3.5 px-4 text-slate-300">
-                        {item.brand} • <span className="text-slate-400">{item.model}</span>
-                      </td>
-                      <td className="py-3.5 px-4 font-mono text-cyan-300">{item.version}</td>
-                      <td className="py-3.5 px-4 font-mono text-slate-400">
-                        {(item.fileSize / (1024 * 1024)).toFixed(1)} MB
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <StatusBadge status={item.status} />
-                      </td>
-                      <td className="py-3.5 px-4 text-right font-bold text-emerald-400">
-                        {item.downloadCount}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            {/* ACTION CARDS */}
+            <div className="space-y-4">
+              <div className="glass-card p-6 rounded-2xl border border-slate-800 space-y-3">
+                <h3 className="text-sm font-bold text-white">Quick Actions</h3>
+                <p className="text-xs text-slate-400">
+                  Upload firmware files, manage categories, and customize mirror links.
+                </p>
+
+                <div className="space-y-2 pt-2">
+                  <button
+                    onClick={() => setIsFormModalOpen(true)}
+                    className="w-full skillby-gradient-btn py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                  >
+                    <Plus className="w-4 h-4" /> Add New Firmware / Tool
+                  </button>
+
+                  <Link
+                    to="/admin/software"
+                    className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <Layers className="w-4 h-4 text-sky-400" /> View Software Catalog
+                  </Link>
+
+                  <Link
+                    to="/"
+                    className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 flex items-center justify-center gap-2 transition-colors"
+                  >
+                    View Public Portal
+                  </Link>
+                </div>
+              </div>
+
+              <div className="glass-card rounded-2xl overflow-hidden border border-slate-800">
+                <div className="relative h-52 overflow-hidden bg-slate-950">
+                  <img
+                    src={technicianHero}
+                    alt="Tested File Lab Technician"
+                    className="w-full h-full object-cover object-top hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+                  <div className="absolute bottom-2.5 left-3 right-3 text-[11px] font-bold text-white flex items-center justify-between">
+                    <span>Hardware Diagnostics Lab</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-red-600/90 text-white font-mono">Live</span>
+                  </div>
+                </div>
+                <div className="p-4 space-y-1 text-xs text-slate-400">
+                  <p className="font-semibold text-slate-200">Tested File Storage Engine</p>
+                  <p className="text-[11px] leading-relaxed">
+                    All uploaded ROMs, schematics, and dump files are lab-tested on real handsets.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-gradient-to-br from-red-950/20 to-sky-950/20 border border-red-500/20 text-xs text-slate-300 space-y-2">
+                <div className="font-bold text-white flex items-center gap-1.5">
+                  <Wrench className="w-4 h-4 text-red-400" /> Tested File Lab Server
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Fast presigned uploads directly route to Cloudflare R2 object storage to ensure zero server memory usage for large firmware ZIPs.
+                </p>
+              </div>
             </div>
           </div>
         </>
       )}
 
-      <SoftwareFormModal
-        isOpen={isFormModalOpen}
-        onClose={() => setIsFormModalOpen(false)}
-        onSuccess={() => refetch()}
-      />
+      {/* CREATE MODAL */}
+      {isFormModalOpen && (
+        <SoftwareFormModal
+          isOpen={isFormModalOpen}
+          onClose={() => setIsFormModalOpen(false)}
+          onSuccess={() => {
+            setIsFormModalOpen(false);
+            refetch();
+          }}
+        />
+      )}
     </div>
   );
 };

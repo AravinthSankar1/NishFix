@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { SoftwareController } from '../controllers/softwareController.js';
 import { authenticateAdmin } from '../middleware/authMiddleware.js';
+import { authenticateUser } from '../middleware/userAuthMiddleware.js';
 
 const publicRouter = Router();
 const adminRouter = Router();
@@ -10,8 +11,12 @@ const adminRouter = Router();
 // ==========================================
 publicRouter.get('/', SoftwareController.listPublicSoftware);
 publicRouter.get('/brands', SoftwareController.getBrands);
+publicRouter.get('/dataworks-structure', SoftwareController.getDataWorksStructure);
 publicRouter.get('/:id', SoftwareController.getPublicSoftwareById);
 publicRouter.post('/:id/download', SoftwareController.downloadSoftware);
+
+// Registered user upload endpoint
+publicRouter.post('/user-upload', authenticateUser, SoftwareController.userUploadSoftware);
 
 // ==========================================
 // PROTECTED ADMIN ROUTES

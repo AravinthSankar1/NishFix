@@ -7,6 +7,7 @@ import {
   querySoftwareSchema,
 } from '../validation/softwareValidation.js';
 import { sendSuccess } from '../utilities/response.js';
+import { AuthenticatedRequest } from '../middleware/authMiddleware.js';
 
 const getIdParam = (req: Request): string => {
   const id = req.params.id;
@@ -39,8 +40,18 @@ export class SoftwareController {
 
   static async getBrands(req: Request, res: Response, next: NextFunction) {
     try {
-      const brands = await SoftwareService.getBrands();
+      const subCategory = typeof req.query.subCategory === 'string' ? req.query.subCategory : undefined;
+      const brands = await SoftwareService.getBrands(subCategory);
       return sendSuccess(res, brands, 'Brands list retrieved');
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  static async getDataWorksStructure(req: Request, res: Response, next: NextFunction) {
+    try {
+      const structure = await SoftwareService.getDataWorksStructure();
+      return sendSuccess(res, structure, 'Borneo DataWorks categories retrieved');
     } catch (error) {
       return next(error);
     }
@@ -54,6 +65,22 @@ export class SoftwareController {
 
       const downloadInfo = await StorageService.requestDownloadUrl(id, clientIp, userAgent);
       return sendSuccess(res, downloadInfo, 'Download URL generated successfully');
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  // USER / ADMIN UPLOAD ENDPOINT
+  static async userUploadSoftware(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const input = createSoftwareSchema.parse(req.body);
+      const userId = req.user?.id;
+      // If user uploaded, set uploaderName if not provided
+      if (!input.uploaderName && req.user?.email) {
+        input.uploaderName = req.user.email.split('@')[0];
+      }
+      const created = await SoftwareService.createSoftware(input, userId);
+      return sendSuccess(res, created, 'Software uploaded and published successfully', 201);
     } catch (error) {
       return next(error);
     }
@@ -81,10 +108,10 @@ export class SoftwareController {
     }
   }
 
-  static async createSoftware(req: Request, res: Response, next: NextFunction) {
+  static async createSoftware(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const input = createSoftwareSchema.parse(req.body);
-      const created = await SoftwareService.createSoftware(input);
+      const created = await SoftwareService.createSoftware(input, req.user?.id);
       return sendSuccess(res, created, 'Software entry created successfully', 201);
     } catch (error) {
       return next(error);

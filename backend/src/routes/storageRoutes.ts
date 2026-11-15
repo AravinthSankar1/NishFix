@@ -1,18 +1,21 @@
 import { Router } from 'express';
 import { StorageController } from '../controllers/storageController.js';
-import { authenticateAdmin } from '../middleware/authMiddleware.js';
+import { upload } from '../middleware/uploadMiddleware.js';
 
 const router = Router();
 
-// Presigned URL generation for uploads (Admin only)
-router.post('/presigned-url', authenticateAdmin, StorageController.getPresignedUploadUrl);
-router.post('/image-url', authenticateAdmin, StorageController.getPresignedUploadUrl);
-router.post('/software-url', authenticateAdmin, StorageController.getPresignedUploadUrl);
+// Real File Upload endpoint (Accepts multipart/form-data 'file')
+router.post('/upload', upload.single('file'), StorageController.uploadFileHandler);
 
-// Storage stats (Admin only)
-router.get('/stats', authenticateAdmin, StorageController.getStorageStats);
+// Presigned URL generation for uploads (R2 fallback)
+router.post('/presigned-url', StorageController.getPresignedUploadUrl);
+router.post('/image-url', StorageController.getPresignedUploadUrl);
+router.post('/software-url', StorageController.getPresignedUploadUrl);
 
-// Mock storage fallbacks for local dev / testing
+// Storage stats
+router.get('/stats', StorageController.getStorageStats);
+
+// Fallbacks for direct local download
 router.put('/mock-upload', StorageController.mockUploadHandler);
 router.get('/mock-download', StorageController.mockDownloadHandler);
 

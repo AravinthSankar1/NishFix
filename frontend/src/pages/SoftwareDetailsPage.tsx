@@ -114,7 +114,7 @@ export const SoftwareDetailsPage: React.FC = () => {
         to="/"
         className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white mb-6 transition-colors"
       >
-        <ArrowLeft className="w-4 h-4 text-indigo-400" /> Back to Catalog
+        <ArrowLeft className="w-4 h-4 text-sky-400" /> Back to Catalog
       </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -145,11 +145,11 @@ export const SoftwareDetailsPage: React.FC = () => {
           </div>
 
           {software.imageUrl && (
-            <div className="glass-card rounded-2xl overflow-hidden border border-slate-800 h-72 sm:h-96 relative bg-slate-950">
+            <div className="glass-card rounded-2xl overflow-hidden border border-slate-800 h-72 sm:h-96 relative bg-slate-950 flex items-center justify-center p-2">
               <img
                 src={software.imageUrl}
                 alt={software.softwareName}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
             </div>
           )}
@@ -186,9 +186,9 @@ export const SoftwareDetailsPage: React.FC = () => {
 
         {/* Sidebar Download Actions */}
         <div className="space-y-6">
-          <div className="glass-card rounded-2xl p-6 border border-indigo-500/30 glow-blue sticky top-24">
+          <div className="glass-card rounded-2xl p-6 border border-sky-500/30 glow-blue sticky top-24">
             <div className="flex items-center gap-3 mb-5">
-              <div className="p-3 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
+              <div className="p-3 rounded-xl bg-sky-500/20 text-sky-400 border border-sky-500/30">
                 <FileArchive className="w-7 h-7" />
               </div>
               <div>
@@ -200,7 +200,7 @@ export const SoftwareDetailsPage: React.FC = () => {
             <div className="space-y-3 text-xs text-slate-300 border-y border-slate-800/80 py-4 mb-6">
               <div className="flex items-center justify-between">
                 <span className="text-slate-400 flex items-center gap-1.5">
-                  <HardDrive className="w-3.5 h-3.5 text-indigo-400" /> File Size:
+                  <HardDrive className="w-3.5 h-3.5 text-sky-400" /> File Size:
                 </span>
                 <span className="font-bold text-slate-100">{formatFileSize(software.fileSize)}</span>
               </div>
@@ -221,9 +221,9 @@ export const SoftwareDetailsPage: React.FC = () => {
 
               <div className="flex items-center justify-between">
                 <span className="text-slate-400 flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-purple-400" /> Host Access:
+                  <Layers className="w-3.5 h-3.5 text-sky-400" /> Host Access:
                 </span>
-                <span className="font-medium text-cyan-300">Direct Download Mirror URL</span>
+                <span className="font-medium text-sky-300">Direct Download Mirror URL</span>
               </div>
             </div>
 
@@ -231,7 +231,7 @@ export const SoftwareDetailsPage: React.FC = () => {
             <button
               onClick={handleDownload}
               disabled={isDownloading}
-              className="w-full py-4 px-6 rounded-xl text-sm font-extrabold bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600 hover:opacity-95 text-white shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+              className="w-full py-4 px-6 rounded-xl text-sm font-extrabold skillby-gradient-btn hover:opacity-95 text-white shadow-xl flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
             >
               {isDownloading ? (
                 <>

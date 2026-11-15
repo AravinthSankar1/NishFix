@@ -13,9 +13,11 @@ export class SoftwareService {
       search,
       brand,
       model,
+      category,
+      subCategory,
       status,
       page = 1,
-      limit = 12,
+      limit = 24,
       sortBy = 'createdAt',
       sortOrder = 'desc',
     } = query;
@@ -29,12 +31,20 @@ export class SoftwareService {
       where.status = status as SoftwareStatus;
     }
 
-    if (brand) {
+    if (subCategory && subCategory !== 'ALL') {
+      where.subCategory = { equals: subCategory, mode: 'insensitive' };
+    }
+
+    if (brand && brand !== 'ALL') {
       where.brand = { equals: brand, mode: 'insensitive' };
     }
 
     if (model) {
       where.model = { contains: model, mode: 'insensitive' };
+    }
+
+    if (category && category !== 'ALL') {
+      where.category = { contains: category, mode: 'insensitive' };
     }
 
     if (search && search.trim()) {
@@ -43,8 +53,14 @@ export class SoftwareService {
         { brand: { contains: searchTerm, mode: 'insensitive' } },
         { model: { contains: searchTerm, mode: 'insensitive' } },
         { softwareName: { contains: searchTerm, mode: 'insensitive' } },
+        { subCategory: { contains: searchTerm, mode: 'insensitive' } },
+        { category: { contains: searchTerm, mode: 'insensitive' } },
+        { compatibility: { contains: searchTerm, mode: 'insensitive' } },
         { version: { contains: searchTerm, mode: 'insensitive' } },
         { tags: { contains: searchTerm, mode: 'insensitive' } },
+        { description: { contains: searchTerm, mode: 'insensitive' } },
+        { uploaderName: { contains: searchTerm, mode: 'insensitive' } },
+        { originalFileName: { contains: searchTerm, mode: 'insensitive' } },
       ];
     }
 
@@ -54,6 +70,15 @@ export class SoftwareService {
         skip,
         take: limit,
         orderBy: { [sortBy]: sortOrder },
+        include: {
+          uploadedByUser: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
       }),
       prisma.software.count({ where }),
     ]);
@@ -76,6 +101,15 @@ export class SoftwareService {
   static async getSoftwareById(id: string, isPublic: boolean = true) {
     const software = await prisma.software.findUnique({
       where: { id },
+      include: {
+        uploadedByUser: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
     });
 
     if (!software) {
@@ -93,7 +127,7 @@ export class SoftwareService {
     return serializeData(software);
   }
 
-  static async createSoftware(data: CreateSoftwareInput) {
+  static async createSoftware(data: CreateSoftwareInput, userId?: string) {
     const software = await prisma.software.create({
       data: {
         brand: data.brand.trim(),
@@ -103,8 +137,10 @@ export class SoftwareService {
         description: data.description || null,
         additionalInfo: data.additionalInfo || null,
         category: data.category || 'Firmware & Tools',
+        subCategory: data.subCategory || 'Mobile Phone',
         tags: data.tags || null,
         compatibility: data.compatibility || null,
+        uploaderName: data.uploaderName || 'Official Lab',
         imageObjectKey: data.imageObjectKey || null,
         imageUrl: data.imageUrl || null,
         fileObjectKey: data.fileObjectKey || 'url-download',
@@ -113,7 +149,8 @@ export class SoftwareService {
         mimeType: data.mimeType || 'application/zip',
         checksum: data.checksum || null,
         externalUrl: data.externalUrl || null,
-        status: (data.status as SoftwareStatus) || SoftwareStatus.DRAFT,
+        status: (data.status as SoftwareStatus) || SoftwareStatus.PUBLISHED,
+        uploadedByUserId: userId || data.uploadedByUserId || null,
       },
     });
 
@@ -136,8 +173,10 @@ export class SoftwareService {
         ...(data.description !== undefined && { description: data.description }),
         ...(data.additionalInfo !== undefined && { additionalInfo: data.additionalInfo }),
         ...(data.category !== undefined && { category: data.category }),
+        ...(data.subCategory !== undefined && { subCategory: data.subCategory }),
         ...(data.tags !== undefined && { tags: data.tags }),
         ...(data.compatibility !== undefined && { compatibility: data.compatibility }),
+        ...(data.uploaderName !== undefined && { uploaderName: data.uploaderName }),
         ...(data.imageObjectKey !== undefined && { imageObjectKey: data.imageObjectKey }),
         ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl }),
         ...(data.fileObjectKey !== undefined && { fileObjectKey: data.fileObjectKey }),
@@ -172,10 +211,15 @@ export class SoftwareService {
     return { id, message: 'Software entry deleted successfully.' };
   }
 
-  static async getBrands() {
+  static async getBrands(subCategory?: string) {
+    const where: any = { status: SoftwareStatus.PUBLISHED };
+    if (subCategory && subCategory !== 'ALL') {
+      where.subCategory = { equals: subCategory, mode: 'insensitive' };
+    }
+
     const brands = await prisma.software.groupBy({
       by: ['brand'],
-      where: { status: SoftwareStatus.PUBLISHED },
+      where,
       _count: { id: true },
       orderBy: { _count: { id: 'desc' } },
     });
@@ -184,6 +228,53 @@ export class SoftwareService {
       brand: b.brand,
       count: b._count.id,
     }));
+  }
+
+  static async getDataWorksStructure() {
+    // Get subCategory and brand counts for Borneo DataWorks navigation
+    const subCategories = ['Mobile Phone', 'Laptop', 'EMMC FILE', 'UFS FILE', 'SPECIAL FILE', 'PC'];
+
+    const items = await prisma.software.findMany({
+      where: { status: SoftwareStatus.PUBLISHED },
+      select: {
+        id: true,
+        brand: true,
+        subCategory: true,
+        category: true,
+        softwareName: true,
+      },
+    });
+
+    const structure: Record<string, { brand: string; count: number; categoryType?: string }[]> = {};
+
+    subCategories.forEach((sc) => {
+      structure[sc] = [];
+    });
+
+    // Group by subCategory and brand
+    const map: Record<string, Map<string, { count: number; categoryType: string }>> = {};
+    subCategories.forEach((sc) => {
+      map[sc] = new Map();
+    });
+
+    items.forEach((item) => {
+      const sc = item.subCategory || 'Mobile Phone';
+      if (!map[sc]) map[sc] = new Map();
+      const brand = item.brand.toUpperCase();
+      const existing = map[sc].get(brand) || { count: 0, categoryType: item.category || 'Firmware' };
+      existing.count += 1;
+      map[sc].set(brand, existing);
+    });
+
+    Object.keys(map).forEach((sc) => {
+      structure[sc] = Array.from(map[sc].entries()).map(([brand, val]) => ({
+        brand,
+        count: val.count,
+        categoryType: val.categoryType,
+      })).sort((a, b) => a.brand.localeCompare(b.brand));
+    });
+
+    return structure;
   }
 
   static async getDashboardStats() {

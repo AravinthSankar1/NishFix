@@ -1,172 +1,316 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Wrench, ShieldCheck, LogOut, LayoutDashboard, Home, KeyRound, Menu, X } from 'lucide-react';
+import { TestedFileLogo } from '../common/SkillByPmLogo';
+import { siteConfig } from '../../config/site';
+import {
+  LogOut,
+  LayoutDashboard,
+  Home,
+  KeyRound,
+  Menu,
+  X,
+  FileCode,
+  CircuitBoard,
+  HardDrive,
+  Key,
+  Wrench,
+  Zap,
+  PhoneCall,
+  ExternalLink,
+  Database,
+  User,
+  Coins,
+  UserPlus,
+} from 'lucide-react';
 
 export const Navbar: React.FC = () => {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, isAdmin, user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isAdminPage = location.pathname.startsWith('/admin');
-
+  const isDataWorks = location.pathname === '/dataworks';
   const closeMobile = () => setMobileMenuOpen(false);
 
+  // Active category from URL query
+  const queryParams = new URLSearchParams(location.search);
+  const currentCategory = queryParams.get('category') || '';
+
+  const navCategories = [
+    { label: 'Flash File', icon: FileCode, color: 'text-sky-400' },
+    { label: 'Schematic', icon: CircuitBoard, color: 'text-emerald-400' },
+    { label: 'Dump File', icon: HardDrive, color: 'text-amber-400' },
+    { label: 'FRP File', icon: Key, color: 'text-purple-400' },
+    { label: 'Tools', icon: Wrench, color: 'text-blue-400' },
+    { label: 'EDL & ISP', icon: Zap, color: 'text-red-400' },
+  ];
+
   return (
-    <header className="sticky top-0 z-50 glass-panel border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Brand Logo */}
-        <Link to="/" className="flex items-center gap-3 group" onClick={closeMobile}>
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-violet-600 to-cyan-500 p-0.5 shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">
-            <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-              <Wrench className="w-5 h-5 text-indigo-400 group-hover:rotate-12 transition-transform" />
-            </div>
+    <header className="sticky top-0 z-50">
+      {/* ═══ 1. NOTICE & ACCESS STATUS BAR ═══ */}
+      <div className="bg-[#fff3cd] text-[#856404] border-b border-[#ffeeba] text-[11px] font-bold py-1 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1.5">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+            <span>
+              MULTI-DEVICE ACCESS ENABLED ~ ~ ~ {siteConfig.brandName.toUpperCase()} OFFICIAL FIRMWARE &amp; DUMP REPOSITORY
+            </span>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-extrabold text-lg text-transparent bg-clip-text bg-gradient-to-r from-slate-100 via-indigo-200 to-indigo-400 tracking-tight">
-                NishTech Hub
-              </span>
-              <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                Software Library
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-400 hidden sm:block">Mobile Phone Repair & Firmware Portal</p>
-          </div>
-        </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-2">
-          <Link
-            to="/"
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${location.pathname === '/'
-                ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-              }`}
-          >
-            <Home className="w-4 h-4" />
-            <span>Library Catalog</span>
-          </Link>
-
-          {isAuthenticated ? (
-            <>
-              <Link
-                to="/admin"
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isAdminPage
-                    ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-                  }`}
+          <div className="flex items-center gap-4">
+            {isAuthenticated && (
+              <span className="bg-amber-200/80 px-2 py-0.5 rounded text-amber-900 font-extrabold flex items-center gap-1">
+                <Coins className="w-3 h-3 text-amber-700" /> {user?.credits ?? 150} Credits
+              </span>
+            )}
+            {siteConfig.phone1 && (
+              <a
+                href={`tel:${siteConfig.phone1}`}
+                className="flex items-center gap-1 hover:text-black transition-colors"
               >
-                <LayoutDashboard className="w-4 h-4 text-indigo-400" />
-                <span>Admin Portal</span>
-              </Link>
-
-              <div className="h-4 w-px bg-slate-800 mx-1" />
-
-              <div className="flex items-center gap-3 pl-1">
-                <div className="hidden sm:block text-right">
-                  <div className="text-xs font-semibold text-slate-200">{user?.name || 'Shop Admin'}</div>
-                  <div className="text-[10px] text-indigo-400 flex items-center justify-end gap-1">
-                    <ShieldCheck className="w-3 h-3 text-emerald-400" /> Authorized Admin
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => {
-                    logout();
-                    navigate('/login');
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20 transition-all cursor-pointer"
-                  title="Logout"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span className="hidden sm:inline">Logout</span>
-                </button>
-              </div>
-            </>
-          ) : (
-            <Link
-              to="/login"
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md hover:opacity-95 transition-opacity"
-            >
-              <KeyRound className="w-4 h-4" />
-              <span>Admin Login</span>
-            </Link>
-          )}
-        </nav>
-
-        {/* Mobile Hamburger Button */}
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden flex items-center justify-center w-10 h-10 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer"
-          aria-label="Toggle navigation menu"
-        >
-          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+                <PhoneCall className="w-3 h-3 text-emerald-700" /> {siteConfig.phone1}
+              </a>
+            )}
+            {siteConfig.whatsapp && (
+              <a
+                href={`https://wa.me/${siteConfig.whatsapp.replace(/[^0-9]/g, '')}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-emerald-800 hover:text-emerald-950 flex items-center gap-1"
+              >
+                WhatsApp <ExternalLink className="w-2.5 h-2.5" />
+              </a>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-800/80 bg-slate-950/95 backdrop-blur-xl px-4 pb-4 pt-3 space-y-2 animate-in slide-in-from-top">
-          <Link
-            to="/"
-            onClick={closeMobile}
-            className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${location.pathname === '/'
-                ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-              }`}
-          >
-            <Home className="w-4 h-4" />
-            <span>Library Catalog</span>
+      {/* ═══ 2. MAIN NAVBAR ═══ */}
+      <div className="glass-panel border-b border-slate-800/80 bg-slate-950/95 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
+          <Link to="/" className="group flex items-center" onClick={closeMobile}>
+            <TestedFileLogo size="md" subtitle={siteConfig.brandTagline} />
           </Link>
 
-          {isAuthenticated ? (
-            <>
-              <Link
-                to="/admin"
-                onClick={closeMobile}
-                className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${isAdminPage
-                    ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-                  }`}
-              >
-                <LayoutDashboard className="w-4 h-4 text-indigo-400" />
-                <span>Admin Portal</span>
-              </Link>
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1.5">
+            <Link
+              to="/"
+              onClick={() => {
+                closeMobile();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className={`flex items-center gap-1 px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-lg text-[11px] xl:text-xs font-semibold tracking-wide transition-colors ${
+                location.pathname === '/' && !currentCategory
+                  ? 'bg-sky-500/15 text-sky-300 border border-sky-500/30'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <Home className="w-3.5 h-3.5 text-sky-400" />
+              <span>Home</span>
+            </Link>
 
-              <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
-                <div>
-                  <div className="text-xs font-semibold text-slate-200">{user?.name || 'Shop Admin'}</div>
-                  <div className="text-[10px] text-indigo-400 flex items-center gap-1 mt-0.5">
-                    <ShieldCheck className="w-3 h-3 text-emerald-400" /> Authorized Admin
+            {/* DATAWORKS SPECIAL TAB (Green Theme) */}
+            <Link
+              to="/dataworks"
+              onClick={closeMobile}
+              className={`flex items-center gap-1 px-2.5 py-1.5 xl:px-3.5 xl:py-2 rounded-lg text-[11px] xl:text-xs font-black tracking-wide transition-all ${
+                isDataWorks
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 ring-1 ring-emerald-400'
+                  : 'bg-emerald-950/60 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-800/40'
+              }`}
+            >
+              <Database className="w-3.5 h-3.5 text-emerald-300" />
+              <span>DataWorks Explorer</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping ml-0.5" />
+            </Link>
+
+            {navCategories.map((cat) => {
+              const Icon = cat.icon;
+              const isActive = location.pathname === '/' && currentCategory === cat.label;
+              return (
+                <Link
+                  key={cat.label}
+                  to={`/?category=${encodeURIComponent(cat.label)}`}
+                  onClick={closeMobile}
+                  className={`flex items-center gap-1 px-2 py-1.5 xl:px-3 xl:py-2 rounded-lg text-[11px] xl:text-xs font-semibold tracking-wide transition-colors whitespace-nowrap ${
+                    isActive
+                      ? 'bg-sky-500/15 text-sky-300 border border-sky-500/30'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                  }`}
+                >
+                  <Icon className={`w-3.5 h-3.5 ${cat.color}`} />
+                  <span>{cat.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Auth & Action Buttons */}
+          <div className="hidden md:flex items-center gap-3">
+            {isAuthenticated ? (
+              <>
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
+                      isAdminPage
+                        ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40'
+                        : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <LayoutDashboard className="w-4 h-4 text-sky-400" />
+                    <span>Admin</span>
+                  </Link>
+                )}
+
+                <Link
+                  to="/profile"
+                  className="flex items-center gap-2 p-1.5 pr-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors"
+                >
+                  <div className="w-7 h-7 rounded-lg bg-sky-500/10 text-sky-400 flex items-center justify-center font-bold text-xs">
+                    <User className="w-4 h-4" />
                   </div>
-                </div>
+                  <div className="text-left leading-none">
+                    <div className="text-xs font-bold text-slate-200 truncate max-w-[100px]">
+                      {user?.name?.split(' ')[0] || 'User'}
+                    </div>
+                    <div className="text-[10px] text-emerald-400 font-mono mt-0.5">
+                      {user?.credits ?? 150} cr
+                    </div>
+                  </div>
+                </Link>
+
                 <button
                   onClick={() => {
                     logout();
                     navigate('/login');
-                    closeMobile();
                   }}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20 transition-all cursor-pointer"
+                  className="p-2 rounded-xl text-rose-400 hover:bg-rose-500/10 border border-rose-500/20 transition-all cursor-pointer"
+                  title="Log Out"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span>Logout</span>
                 </button>
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link
+                  to="/login"
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition-colors flex items-center gap-1.5"
+                >
+                  <KeyRound className="w-3.5 h-3.5 text-sky-400" />
+                  <span>Log In</span>
+                </Link>
+                <Link
+                  to="/register"
+                  className="skillby-gradient-btn px-4 py-2 rounded-xl text-xs font-bold shadow-md hover:opacity-95 transition-all flex items-center gap-1.5"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>Create Account</span>
+                </Link>
               </div>
-            </>
-          ) : (
-            <Link
-              to="/login"
-              onClick={closeMobile}
-              className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md hover:opacity-95 transition-opacity"
-            >
-              <KeyRound className="w-4 h-4" />
-              <span>Admin Login</span>
-            </Link>
-          )}
+            )}
+          </div>
+
+          {/* Mobile Hamburger */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="lg:hidden flex items-center justify-center w-10 h-10 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5 text-red-400" /> : <Menu className="w-5 h-5 text-sky-400" />}
+          </button>
         </div>
-      )}
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden border-t border-slate-800/80 bg-slate-950/98 backdrop-blur-2xl px-4 pb-5 pt-3 space-y-2">
+            <Link
+              to="/"
+              onClick={closeMobile}
+              className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-200 hover:bg-slate-800/60"
+            >
+              <Home className="w-4 h-4 text-sky-400" /> Home
+            </Link>
+
+            <Link
+              to="/dataworks"
+              onClick={closeMobile}
+              className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-bold text-emerald-300 bg-emerald-950/80 border border-emerald-500/40"
+            >
+              <Database className="w-4 h-4 text-emerald-400" /> Borneo DataWorks Explorer
+            </Link>
+
+            {navCategories.map((cat) => {
+              const Icon = cat.icon;
+              return (
+                <Link
+                  key={cat.label}
+                  to={`/?category=${encodeURIComponent(cat.label)}`}
+                  onClick={closeMobile}
+                  className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-200 hover:bg-slate-800/60"
+                >
+                  <Icon className={`w-4 h-4 ${cat.color}`} />
+                  <span>{cat.label}</span>
+                </Link>
+              );
+            })}
+
+            <div className="pt-3 border-t border-slate-800 space-y-2">
+              {isAuthenticated ? (
+                <>
+                  <Link
+                    to="/profile"
+                    onClick={closeMobile}
+                    className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-200 bg-slate-900"
+                  >
+                    <User className="w-4 h-4 text-sky-400" /> My Profile ({user?.credits ?? 150} Credits)
+                  </Link>
+
+                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      onClick={closeMobile}
+                      className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium text-sky-300 bg-sky-500/10"
+                    >
+                      <LayoutDashboard className="w-4 h-4 text-sky-400" /> Admin Dashboard
+                    </Link>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      logout();
+                      navigate('/login');
+                      closeMobile();
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-rose-500/10 text-rose-400"
+                  >
+                    <LogOut className="w-4 h-4" /> Logout
+                  </button>
+                </>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <Link
+                    to="/login"
+                    onClick={closeMobile}
+                    className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-850 text-slate-200 border border-slate-700"
+                  >
+                    <KeyRound className="w-3.5 h-3.5" /> Log In
+                  </Link>
+                  <Link
+                    to="/register"
+                    onClick={closeMobile}
+                    className="skillby-gradient-btn flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" /> Register
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </header>
   );
 };

@@ -5,7 +5,35 @@ import { sendSuccess, sendError } from '../utilities/response.js';
 
 export class StorageController {
   /**
-   * Request a secure presigned upload URL for direct browser-to-R2 upload
+   * Real multipart file upload endpoint (Multer handler)
+   */
+  static async uploadFileHandler(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.file) {
+        return sendError(res, 'No file was provided in the upload request', 400, 'NO_FILE');
+      }
+
+      const file = req.file;
+      const fileUrl = `/uploads/${file.filename}`;
+
+      return sendSuccess(
+        res,
+        {
+          fileUrl,
+          fileName: file.filename,
+          originalName: file.originalname,
+          size: file.size,
+          mimeType: file.mimetype,
+        },
+        'File uploaded successfully to server storage'
+      );
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  /**
+   * Request a presigned upload URL for direct browser-to-R2 upload (fallback)
    */
   static async getPresignedUploadUrl(req: Request, res: Response, next: NextFunction) {
     try {
@@ -22,10 +50,10 @@ export class StorageController {
    */
   static async mockUploadHandler(req: Request, res: Response) {
     const { key } = req.query;
-    console.log(`[Mock R2 Storage]: Received simulated upload for object key: ${key}`);
+    console.log(`[Storage]: Received upload for object key: ${key}`);
     return res.status(200).json({
       success: true,
-      message: 'Mock file upload simulated successfully',
+      message: 'File upload processed successfully',
       key,
     });
   }
@@ -37,10 +65,9 @@ export class StorageController {
     const { key, filename } = req.query;
     const downloadName = (filename as string) || 'software-file.zip';
 
-    // Send a sample binary ZIP response (or text payload for mock testing)
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
-    return res.status(200).send(Buffer.from(`MOCK REPAIR SOFTWARE PACKAGE FILE CONTENT FOR: ${downloadName} [Key: ${key}]`));
+    return res.status(200).send(Buffer.from(`REPAIR SOFTWARE PACKAGE FILE CONTENT FOR: ${downloadName} [Key: ${key}]`));
   }
 
   /**

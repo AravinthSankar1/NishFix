@@ -112,7 +112,7 @@ export const AdminSoftwarePage: React.FC = () => {
 
         <button
           onClick={handleOpenCreate}
-          className="px-5 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-all cursor-pointer"
+          className="skillby-gradient-btn px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shadow-md"
         >
           <Plus className="w-4 h-4" />
           <span>Upload Software Package</span>
@@ -135,7 +135,7 @@ export const AdminSoftwarePage: React.FC = () => {
               }}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 statusFilter === tab.id
-                  ? 'bg-indigo-600 text-white shadow-sm'
+                  ? 'skillby-gradient-btn text-white shadow-sm'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
               }`}
             >
