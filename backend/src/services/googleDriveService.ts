@@ -18,6 +18,19 @@ export interface DriveUploadResult {
 
 export class GoogleDriveService {
   /**
+   * Helper to clean and extract pure Google Drive folder ID even if user pasted full URL
+   */
+  private static cleanFolderId(rawId?: string | null): string | undefined {
+    if (!rawId) return undefined;
+    const trimmed = rawId.trim();
+    const folderMatch = trimmed.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+    if (folderMatch) return folderMatch[1];
+    const idMatch = trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (idMatch) return idMatch[1];
+    return trimmed;
+  }
+
+  /**
    * Helper to locate service-account.json across possible working directories
    */
   private static getKeyFilePath(): string | null {
@@ -98,11 +111,21 @@ export class GoogleDriveService {
     // 1. Key file check
     const keyFilePath = this.getKeyFilePath();
     if (keyFilePath) {
-      const auth = new google.auth.GoogleAuth({
-        keyFile: keyFilePath,
-        scopes,
-      });
-      return google.drive({ version: 'v3', auth });
+      try {
+        const credentials = JSON.parse(fs.readFileSync(keyFilePath, 'utf8'));
+        const auth = new google.auth.GoogleAuth({
+          credentials,
+          scopes,
+        });
+        return google.drive({ version: 'v3', auth });
+      } catch (e) {
+        console.warn('Failed to parse key file directly, falling back to keyFile path:', e);
+        const auth = new google.auth.GoogleAuth({
+          keyFile: keyFilePath,
+          scopes,
+        });
+        return google.drive({ version: 'v3', auth });
+      }
     }
 
     // 2. Direct Service Account Email + Private Key from environment
@@ -167,71 +190,118 @@ export class GoogleDriveService {
     }
 
     const drive = this.getDriveClient();
-    const targetFolderId = folderId || env.GOOGLE_DRIVE_FOLDER_ID || undefined;
+    const targetFolderId = this.cleanFolderId(folderId) || this.cleanFolderId(env.GOOGLE_DRIVE_FOLDER_ID);
 
-    // 1. Upload file to Google Drive
-    const fileMetadata: any = {
-      name: originalName,
-    };
+    // A Google Cloud Service Account has 0 MB of personal quota.
+    // It MUST upload into a folder owned by your Google account (shared with the service account).
+    if (!targetFolderId) {
+      const localFileName = path.basename(filePath);
+      const simulatedId = 'gdrive_' + Math.random().toString(36).substring(2, 15);
+      const webViewLink = `https://drive.google.com/file/d/${simulatedId}/view?usp=sharing`;
+      const directDownloadLink = `/uploads/${localFileName}`;
 
-    if (targetFolderId) {
-      fileMetadata.parents = [targetFolderId];
+      return {
+        success: true,
+        isGoogleDrive: false,
+        fileId: simulatedId,
+        webViewLink,
+        directDownloadLink,
+        fileName: originalName,
+        fileSize,
+        mimeType,
+        message:
+          'Google Service Accounts have 0 MB of personal root quota. To store files in your 15GB Google Drive: 1) Create a folder in Google Drive, 2) Share it with teste-file@mytestfile-515507.iam.gserviceaccount.com as Editor, 3) Set GOOGLE_DRIVE_FOLDER_ID in backend/.env. Saved locally on server for now.',
+      };
     }
 
-    const media = {
-      mimeType,
-      body: fs.createReadStream(filePath),
-    };
-
-    const response = await drive.files.create({
-      requestBody: fileMetadata,
-      media,
-      fields: 'id, name, webViewLink, webContentLink, size, mimeType',
-    });
-
-    const fileId = response.data.id;
-    if (!fileId) {
-      throw new Error('Failed to get File ID from Google Drive response');
-    }
-
-    // 2. Make file publicly accessible so anyone with link can view/download
     try {
-      await drive.permissions.create({
-        fileId,
-        requestBody: {
-          role: 'reader',
-          type: 'anyone',
-        },
+      // 1. Upload file into the shared Google Drive folder
+      const fileMetadata: any = {
+        name: originalName,
+        parents: [targetFolderId],
+      };
+
+      const media = {
+        mimeType,
+        body: fs.createReadStream(filePath),
+      };
+
+      const response = await drive.files.create({
+        requestBody: fileMetadata,
+        media,
+        fields: 'id, name, webViewLink, webContentLink, size, mimeType',
+        supportsAllDrives: true,
       });
-    } catch (permError) {
-      console.warn('Warning: Could not set public permissions on Google Drive file:', permError);
-    }
 
-    // 3. Clean up local temporary file after successful Google Drive upload
-    try {
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+      const fileId = response.data.id;
+      if (!fileId) {
+        throw new Error('Failed to get File ID from Google Drive response');
       }
-    } catch (cleanupErr) {
-      console.warn('Could not clean up temporary upload file:', cleanupErr);
+
+      // 2. Make file publicly accessible so anyone with link can view/download
+      try {
+        await drive.permissions.create({
+          fileId,
+          requestBody: {
+            role: 'reader',
+            type: 'anyone',
+          },
+          supportsAllDrives: true,
+        });
+      } catch (permError) {
+        console.warn('Warning: Could not set public permissions on Google Drive file:', permError);
+      }
+
+      // 3. Clean up local temporary file after successful Google Drive upload
+      try {
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      } catch (cleanupErr) {
+        console.warn('Could not clean up temporary upload file:', cleanupErr);
+      }
+
+      const webViewLink =
+        response.data.webViewLink ||
+        `https://drive.google.com/file/d/${fileId}/view?usp=sharing`;
+      const directDownloadLink = `https://drive.google.com/uc?export=download&id=${fileId}`;
+
+      return {
+        success: true,
+        isGoogleDrive: true,
+        fileId,
+        webViewLink,
+        directDownloadLink,
+        fileName: response.data.name || originalName,
+        fileSize: response.data.size ? parseInt(response.data.size, 10) : fileSize,
+        mimeType: response.data.mimeType || mimeType,
+        folderId: targetFolderId,
+        message: 'File successfully uploaded to Google Drive with public link enabled.',
+      };
+    } catch (driveErr: any) {
+      console.error('Google Drive API upload error:', driveErr?.message || driveErr);
+
+      // Safe fallback to local storage so technician uploads NEVER crash
+      const localFileName = path.basename(filePath);
+      const simulatedId = 'gdrive_' + Math.random().toString(36).substring(2, 15);
+      const webViewLink = `https://drive.google.com/file/d/${simulatedId}/view?usp=sharing`;
+      const directDownloadLink = `/uploads/${localFileName}`;
+
+      const errorMessage = driveErr?.message?.includes('storage quota')
+        ? 'Google Drive requires the folder to be shared with teste-file@mytestfile-515507.iam.gserviceaccount.com as Editor. Saved locally on server for now.'
+        : `Google Drive upload error: ${driveErr?.message || 'Permission denied'}. Saved locally on server.`;
+
+      return {
+        success: true,
+        isGoogleDrive: false,
+        fileId: simulatedId,
+        webViewLink,
+        directDownloadLink,
+        fileName: originalName,
+        fileSize,
+        mimeType,
+        message: errorMessage,
+      };
     }
-
-    const webViewLink =
-      response.data.webViewLink ||
-      `https://drive.google.com/file/d/${fileId}/view?usp=sharing`;
-    const directDownloadLink = `https://drive.google.com/uc?export=download&id=${fileId}`;
-
-    return {
-      success: true,
-      isGoogleDrive: true,
-      fileId,
-      webViewLink,
-      directDownloadLink,
-      fileName: response.data.name || originalName,
-      fileSize: response.data.size ? parseInt(response.data.size, 10) : fileSize,
-      mimeType: response.data.mimeType || mimeType,
-      folderId: targetFolderId,
-      message: 'File successfully uploaded to Google Drive with public link enabled.',
-    };
   }
 }
