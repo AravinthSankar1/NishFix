@@ -7,6 +7,10 @@ const router = Router();
 // Google Drive Direct Upload endpoint (Multipart file)
 router.post('/upload-drive', upload.single('file'), StorageController.uploadToGoogleDriveHandler);
 
+// Google Drive 1-Click OAuth Connect
+router.get('/gdrive-auth', StorageController.getGoogleAuthUrl);
+router.get('/gdrive-callback', StorageController.handleGoogleAuthCallback);
+
 // Google Drive Integration Status
 router.get('/gdrive-status', StorageController.getGoogleDriveStatus);
 

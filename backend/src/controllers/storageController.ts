@@ -1,10 +1,83 @@
 import { Request, Response, NextFunction } from 'express';
+import fs from 'fs';
+import path from 'path';
+import { google } from 'googleapis';
+import { env } from '../config/env.js';
 import { StorageService } from '../services/storageService.js';
 import { GoogleDriveService } from '../services/googleDriveService.js';
 import { uploadUrlSchema } from '../validation/softwareValidation.js';
 import { sendSuccess, sendError } from '../utilities/response.js';
 
 export class StorageController {
+  /**
+   * Start 1-Click Google OAuth flow to link personal Google Drive
+   */
+  static async getGoogleAuthUrl(req: Request, res: Response) {
+    if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
+      return res.status(400).send(`
+        <html>
+          <body style="font-family: sans-serif; background: #0f172a; color: #f8fafc; padding: 40px; text-align: center;">
+            <h2>Google OAuth Client ID & Secret Required</h2>
+            <p>Please add <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code> to your <code>backend/.env</code> file first.</p>
+            <p><a href="/admin" style="color: #38bdf8;">Return to Admin Dashboard</a></p>
+          </body>
+        </html>
+      `);
+    }
+
+    const redirectUri = `${req.protocol}://${req.get('host')}/api/uploads/gdrive-callback`;
+    const oauth2Client = new google.auth.OAuth2(
+      env.GOOGLE_CLIENT_ID,
+      env.GOOGLE_CLIENT_SECRET,
+      redirectUri
+    );
+
+    const authUrl = oauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      prompt: 'consent',
+      scope: ['https://www.googleapis.com/auth/drive'],
+    });
+
+    return res.redirect(authUrl);
+  }
+
+  /**
+   * Handle OAuth Callback from Google and store refresh_token
+   */
+  static async handleGoogleAuthCallback(req: Request, res: Response) {
+    try {
+      const code = req.query.code as string;
+      if (!code) {
+        return res.redirect(`${env.CLIENT_URL}/admin?error=no_code_provided`);
+      }
+
+      const redirectUri = `${req.protocol}://${req.get('host')}/api/uploads/gdrive-callback`;
+      const oauth2Client = new google.auth.OAuth2(
+        env.GOOGLE_CLIENT_ID,
+        env.GOOGLE_CLIENT_SECRET,
+        redirectUri
+      );
+
+      const { tokens } = await oauth2Client.getToken(code);
+      if (tokens.refresh_token) {
+        const envPath = path.resolve(process.cwd(), '.env');
+        let content = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : '';
+        if (content.includes('GOOGLE_REFRESH_TOKEN=')) {
+          content = content.replace(/GOOGLE_REFRESH_TOKEN=.*/, `GOOGLE_REFRESH_TOKEN=${tokens.refresh_token}`);
+        } else {
+          content += `\nGOOGLE_REFRESH_TOKEN=${tokens.refresh_token}\n`;
+        }
+        fs.writeFileSync(envPath, content);
+        env.GOOGLE_REFRESH_TOKEN = tokens.refresh_token;
+      }
+
+      return res.redirect(`${env.CLIENT_URL}/admin?gdrive_connected=true`);
+    } catch (err: any) {
+      console.error('OAuth Callback Error:', err);
+      return res.redirect(`${env.CLIENT_URL}/admin?error=${encodeURIComponent(err?.message || 'auth_failed')}`);
+    }
+  }
+
   /**
    * Real multipart file upload endpoint (Multer handler - Local Storage)
    */
