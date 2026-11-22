@@ -1,11 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import { StorageService } from '../services/storageService.js';
+import { GoogleDriveService } from '../services/googleDriveService.js';
 import { uploadUrlSchema } from '../validation/softwareValidation.js';
 import { sendSuccess, sendError } from '../utilities/response.js';
 
 export class StorageController {
   /**
-   * Real multipart file upload endpoint (Multer handler)
+   * Real multipart file upload endpoint (Multer handler - Local Storage)
    */
   static async uploadFileHandler(req: Request, res: Response, next: NextFunction) {
     try {
@@ -24,12 +25,53 @@ export class StorageController {
           originalName: file.originalname,
           size: file.size,
           mimeType: file.mimetype,
+          isGoogleDrive: false,
         },
         'File uploaded successfully to server storage'
       );
     } catch (error) {
       return next(error);
     }
+  }
+
+  /**
+   * Direct Upload to Google Drive
+   * Streams the file directly into Google Drive, makes it public, and returns the Drive links
+   */
+  static async uploadToGoogleDriveHandler(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.file) {
+        return sendError(res, 'No file was provided in the upload request', 400, 'NO_FILE');
+      }
+
+      const file = req.file;
+      const folderId = req.body.folderId as string | undefined;
+
+      const driveResult = await GoogleDriveService.uploadFile({
+        filePath: file.path,
+        originalName: file.originalname,
+        mimeType: file.mimetype,
+        folderId,
+      });
+
+      return sendSuccess(
+        res,
+        driveResult,
+        driveResult.isGoogleDrive
+          ? 'File successfully uploaded directly to Google Drive'
+          : 'File uploaded locally (Google Drive credentials can be configured in backend/.env)'
+      );
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  /**
+   * Check Google Drive configuration status
+   */
+  static async getGoogleDriveStatus(req: Request, res: Response) {
+    const status = GoogleDriveService.getStatus();
+    return sendSuccess(res, status, 'Google Drive integration status retrieved');
   }
 
   /**

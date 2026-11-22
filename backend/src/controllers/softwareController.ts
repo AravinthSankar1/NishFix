@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { SoftwareService } from '../services/softwareService.js';
 import { StorageService } from '../services/storageService.js';
+import { GoogleDriveService } from '../services/googleDriveService.js';
 import {
   createSoftwareSchema,
   updateSoftwareSchema,
@@ -81,6 +82,44 @@ export class SoftwareController {
       }
       const created = await SoftwareService.createSoftware(input, userId);
       return sendSuccess(res, created, 'Software uploaded and published successfully', 201);
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  // DIRECT UPLOAD WITH FILE (Streams file to Google Drive and creates DB record)
+  static async uploadSoftwareWithFile(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const file = req.file;
+      const body = { ...req.body };
+
+      if (typeof body.fileSize === 'string') {
+        body.fileSize = parseFloat(body.fileSize) || 0;
+      }
+
+      if (file) {
+        const driveResult = await GoogleDriveService.uploadFile({
+          filePath: file.path,
+          originalName: file.originalname,
+          mimeType: file.mimetype,
+          folderId: body.folderId,
+        });
+
+        body.externalUrl = driveResult.webViewLink;
+        body.fileObjectKey = driveResult.fileId;
+        body.originalFileName = driveResult.fileName;
+        body.fileSize = driveResult.fileSize;
+        body.mimeType = driveResult.mimeType;
+      }
+
+      const input = createSoftwareSchema.parse(body);
+      const userId = req.user?.id;
+      if (!input.uploaderName && req.user?.email) {
+        input.uploaderName = req.user.email.split('@')[0];
+      }
+
+      const created = await SoftwareService.createSoftware(input, userId);
+      return sendSuccess(res, created, 'Software and file uploaded to Google Drive & saved successfully', 201);
     } catch (error) {
       return next(error);
     }

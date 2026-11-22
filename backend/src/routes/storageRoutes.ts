@@ -4,7 +4,13 @@ import { upload } from '../middleware/uploadMiddleware.js';
 
 const router = Router();
 
-// Real File Upload endpoint (Accepts multipart/form-data 'file')
+// Google Drive Direct Upload endpoint (Multipart file)
+router.post('/upload-drive', upload.single('file'), StorageController.uploadToGoogleDriveHandler);
+
+// Google Drive Integration Status
+router.get('/gdrive-status', StorageController.getGoogleDriveStatus);
+
+// Local File Upload endpoint (Accepts multipart/form-data 'file')
 router.post('/upload', upload.single('file'), StorageController.uploadFileHandler);
 
 // Presigned URL generation for uploads (R2 fallback)

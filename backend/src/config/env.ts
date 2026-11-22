@@ -17,10 +17,19 @@ export const env = {
   R2_SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY || '',
   R2_BUCKET_NAME: process.env.R2_BUCKET_NAME || 'mobile-repair-software',
   R2_PUBLIC_BASE_URL: process.env.R2_PUBLIC_BASE_URL || '',
+
+  // Google Drive API Credentials (100% Free Cloud Storage Integration)
+  GOOGLE_SERVICE_ACCOUNT_EMAIL: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '',
+  GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: (process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+  GOOGLE_SERVICE_ACCOUNT_KEY_FILE: process.env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE || '',
+  GOOGLE_DRIVE_FOLDER_ID: process.env.GOOGLE_DRIVE_FOLDER_ID || '',
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '',
+  GOOGLE_REFRESH_TOKEN: process.env.GOOGLE_REFRESH_TOKEN || '',
   
-  // Storage Quota Limit (Default 10 GB for Free Tier awareness)
+  // Storage Quota Limit (Default 15 GB for Free Tier Google Drive awareness)
   FREE_TIER_STORAGE_LIMIT_BYTES: parseInt(
-    process.env.FREE_TIER_STORAGE_LIMIT_BYTES || '10737418240',
+    process.env.FREE_TIER_STORAGE_LIMIT_BYTES || '16106127360', // 15 GB
     10
   ),
   

@@ -709,10 +709,14 @@ export const DataWorksPage: React.FC = () => {
                   href={selectedDetailFile.externalUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors"
+                  className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors border border-slate-700 hover:border-emerald-500/50"
                 >
-                  <ExternalLink className="w-4 h-4 text-sky-400" />
-                  <span>Direct URL Link</span>
+                  <ExternalLink className="w-4 h-4 text-emerald-400" />
+                  <span>
+                    {selectedDetailFile.externalUrl.includes('drive.google.com')
+                      ? 'Open in Google Drive'
+                      : 'Direct File Link'}
+                  </span>
                 </a>
               )}
             </div>

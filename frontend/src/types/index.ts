@@ -131,3 +131,24 @@ export interface FileUploadResponse {
   size: number;
   mimeType: string;
 }
+
+export interface GoogleDriveUploadResponse {
+  success: boolean;
+  isGoogleDrive: boolean;
+  fileId: string;
+  webViewLink: string;
+  directDownloadLink: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  folderId?: string;
+  message?: string;
+}
+
+export interface GoogleDriveStatus {
+  isConfigured: boolean;
+  authType: string;
+  folderId: string | null;
+  serviceAccountEmail: string | null;
+  freeTierLimitGB: string;
+}

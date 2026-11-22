@@ -11,6 +11,8 @@ import type {
   User,
   DataWorksStructure,
   FileUploadResponse,
+  GoogleDriveUploadResponse,
+  GoogleDriveStatus,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -138,6 +140,18 @@ export const publicSoftwareApi = {
     const res = await api.post<ApiResponse<Software>>('/software/user-upload', data);
     return res.data.data;
   },
+  uploadSoftwareWithFile: async (formData: FormData, onProgress?: (percent: number) => void) => {
+    const res = await api.post<ApiResponse<Software>>('/software/upload-with-file', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total && onProgress) {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(percent);
+        }
+      },
+    });
+    return res.data.data;
+  },
 };
 
 // ADMIN SOFTWARE
@@ -166,6 +180,18 @@ export const adminSoftwareApi = {
     const res = await api.post<ApiResponse<Software>>('/admin/software', data);
     return res.data.data;
   },
+  uploadSoftwareWithFile: async (formData: FormData, onProgress?: (percent: number) => void) => {
+    const res = await api.post<ApiResponse<Software>>('/admin/software/upload-with-file', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total && onProgress) {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(percent);
+        }
+      },
+    });
+    return res.data.data;
+  },
   updateSoftware: async (id: string, data: Partial<Software>) => {
     const res = await api.put<ApiResponse<Software>>(`/admin/software/${id}`, data);
     return res.data.data;
@@ -190,6 +216,41 @@ export const adminSoftwareApi = {
 
 // REAL MULTIPART STORAGE & R2
 export const storageApi = {
+  /**
+   * Upload real file directly to Google Drive (with public link generation)
+   */
+  uploadToGoogleDrive: async (
+    file: File,
+    folderId?: string,
+    onProgress?: (percent: number) => void
+  ): Promise<GoogleDriveUploadResponse> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (folderId) formData.append('folderId', folderId);
+
+    const res = await api.post<ApiResponse<GoogleDriveUploadResponse>>('/uploads/upload-drive', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total && onProgress) {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(percent);
+        }
+      },
+    });
+
+    return res.data.data;
+  },
+
+  /**
+   * Get Google Drive configuration status & storage info
+   */
+  getGoogleDriveStatus: async (): Promise<GoogleDriveStatus> => {
+    const res = await api.get<ApiResponse<GoogleDriveStatus>>('/uploads/gdrive-status');
+    return res.data.data;
+  },
+
   /**
    * Upload real file directly to the backend storage
    */
