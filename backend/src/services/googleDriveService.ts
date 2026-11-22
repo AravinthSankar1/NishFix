@@ -18,22 +18,37 @@ export interface DriveUploadResult {
 
 export class GoogleDriveService {
   /**
+   * Helper to locate service-account.json across possible working directories
+   */
+  private static getKeyFilePath(): string | null {
+    const candidates = [
+      env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE && path.isAbsolute(env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE)
+        ? env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE
+        : null,
+      env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE
+        ? path.resolve(process.cwd(), env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE)
+        : null,
+      env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE
+        ? path.resolve(process.cwd(), 'backend', env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE)
+        : null,
+      path.resolve(process.cwd(), 'service-account.json'),
+      path.resolve(process.cwd(), 'backend', 'service-account.json'),
+    ];
+
+    for (const cand of candidates) {
+      if (cand && fs.existsSync(cand)) {
+        return cand;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Check whether Google Drive credentials are fully configured
    */
   static isConfigured(): boolean {
     // 1. Service Account Key File exists?
-    if (env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE) {
-      const resolvedPath = path.isAbsolute(env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE)
-        ? env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE
-        : path.resolve(process.cwd(), env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE);
-      if (fs.existsSync(resolvedPath)) {
-        return true;
-      }
-    }
-
-    // Default service-account.json in backend root?
-    const defaultJsonPath = path.resolve(process.cwd(), 'service-account.json');
-    if (fs.existsSync(defaultJsonPath)) {
+    if (this.getKeyFilePath()) {
       return true;
     }
 
@@ -57,8 +72,7 @@ export class GoogleDriveService {
     const configured = this.isConfigured();
     let authType = 'none';
 
-    const defaultJsonPath = path.resolve(process.cwd(), 'service-account.json');
-    if (env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE || fs.existsSync(defaultJsonPath)) {
+    if (this.getKeyFilePath()) {
       authType = 'service_account_file';
     } else if (env.GOOGLE_SERVICE_ACCOUNT_EMAIL && env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY) {
       authType = 'service_account_env';
@@ -82,23 +96,7 @@ export class GoogleDriveService {
     const scopes = ['https://www.googleapis.com/auth/drive'];
 
     // 1. Key file check
-    let keyFilePath: string | null = null;
-    if (env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE) {
-      const resolvedPath = path.isAbsolute(env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE)
-        ? env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE
-        : path.resolve(process.cwd(), env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE);
-      if (fs.existsSync(resolvedPath)) {
-        keyFilePath = resolvedPath;
-      }
-    }
-
-    if (!keyFilePath) {
-      const defaultJsonPath = path.resolve(process.cwd(), 'service-account.json');
-      if (fs.existsSync(defaultJsonPath)) {
-        keyFilePath = defaultJsonPath;
-      }
-    }
-
+    const keyFilePath = this.getKeyFilePath();
     if (keyFilePath) {
       const auth = new google.auth.GoogleAuth({
         keyFile: keyFilePath,
