@@ -60,18 +60,18 @@ export class GoogleDriveService {
    * Check whether Google Drive credentials are fully configured
    */
   static isConfigured(): boolean {
-    // 1. Service Account Key File exists?
+    // 1. OAuth2 Refresh Token (MUST be first — only method that works with personal Gmail)
+    if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET && env.GOOGLE_REFRESH_TOKEN) {
+      return true;
+    }
+
+    // 2. Service Account Key File (only works with Google Workspace / Shared Drives)
     if (this.getKeyFilePath()) {
       return true;
     }
 
-    // 2. Service Account Email + Private Key
+    // 3. Service Account Email + Private Key
     if (env.GOOGLE_SERVICE_ACCOUNT_EMAIL && env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY) {
-      return true;
-    }
-
-    // 3. OAuth2 Refresh Token
-    if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET && env.GOOGLE_REFRESH_TOKEN) {
       return true;
     }
 
@@ -85,12 +85,13 @@ export class GoogleDriveService {
     const configured = this.isConfigured();
     let authType = 'none';
 
-    if (this.getKeyFilePath()) {
+    // Priority: OAuth2 > Service Account File > Service Account Env
+    if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET && env.GOOGLE_REFRESH_TOKEN) {
+      authType = 'oauth2';
+    } else if (this.getKeyFilePath()) {
       authType = 'service_account_file';
     } else if (env.GOOGLE_SERVICE_ACCOUNT_EMAIL && env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY) {
       authType = 'service_account_env';
-    } else if (env.GOOGLE_CLIENT_ID && env.GOOGLE_REFRESH_TOKEN) {
-      authType = 'oauth2';
     }
 
     return {
@@ -98,19 +99,36 @@ export class GoogleDriveService {
       authType,
       folderId: env.GOOGLE_DRIVE_FOLDER_ID || null,
       serviceAccountEmail: env.GOOGLE_SERVICE_ACCOUNT_EMAIL || null,
+      hasRefreshToken: !!env.GOOGLE_REFRESH_TOKEN,
       freeTierLimitGB: '15 GB',
     };
   }
 
   /**
    * Initialize and return authenticated Google Drive API client
+   * PRIORITY ORDER: OAuth2 first (works with personal Gmail), then service account fallbacks
    */
   private static getDriveClient() {
     const scopes = ['https://www.googleapis.com/auth/drive'];
 
-    // 1. Key file check
+    // 1. OAuth2 Client with Refresh Token (MUST BE FIRST for personal @gmail.com accounts)
+    //    Service accounts have 0 MB quota on personal Gmail Drive — they can NEVER upload.
+    if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET && env.GOOGLE_REFRESH_TOKEN) {
+      console.log('[GoogleDrive] Using OAuth2 with personal refresh token');
+      const oauth2Client = new google.auth.OAuth2(
+        env.GOOGLE_CLIENT_ID,
+        env.GOOGLE_CLIENT_SECRET
+      );
+      oauth2Client.setCredentials({
+        refresh_token: env.GOOGLE_REFRESH_TOKEN,
+      });
+      return google.drive({ version: 'v3', auth: oauth2Client });
+    }
+
+    // 2. Service Account Key File (only works with Workspace accounts or Shared Drives)
     const keyFilePath = this.getKeyFilePath();
     if (keyFilePath) {
+      console.log('[GoogleDrive] Using Service Account key file (warning: won\'t work with personal Gmail)');
       try {
         const credentials = JSON.parse(fs.readFileSync(keyFilePath, 'utf8'));
         const auth = new google.auth.GoogleAuth({
@@ -128,8 +146,9 @@ export class GoogleDriveService {
       }
     }
 
-    // 2. Direct Service Account Email + Private Key from environment
+    // 3. Direct Service Account Email + Private Key from environment
     if (env.GOOGLE_SERVICE_ACCOUNT_EMAIL && env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY) {
+      console.log('[GoogleDrive] Using Service Account JWT (warning: won\'t work with personal Gmail)');
       const auth = new google.auth.JWT({
         email: env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
         key: env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY,
@@ -138,19 +157,7 @@ export class GoogleDriveService {
       return google.drive({ version: 'v3', auth });
     }
 
-    // 3. OAuth2 Client with Refresh Token
-    if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET && env.GOOGLE_REFRESH_TOKEN) {
-      const oauth2Client = new google.auth.OAuth2(
-        env.GOOGLE_CLIENT_ID,
-        env.GOOGLE_CLIENT_SECRET
-      );
-      oauth2Client.setCredentials({
-        refresh_token: env.GOOGLE_REFRESH_TOKEN,
-      });
-      return google.drive({ version: 'v3', auth: oauth2Client });
-    }
-
-    throw new Error('Google Drive credentials are not configured in backend.');
+    throw new Error('Google Drive credentials are not configured. Run the OAuth flow: visit http://localhost:5000/api/uploads/gdrive-auth');
   }
 
   /**
