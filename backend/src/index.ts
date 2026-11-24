@@ -9,6 +9,7 @@ import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import { publicSoftwareRouter, adminSoftwareRouter } from './routes/softwareRoutes.js';
 import storageRoutes from './routes/storageRoutes.js';
+import settingRoutes from './routes/settingRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { env } from './config/env.js';
 import { AuthService } from './services/authService.js';
@@ -56,6 +57,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/software', publicSoftwareRouter);
 app.use('/api/admin', adminSoftwareRouter);
 app.use('/api/uploads', storageRoutes);
+app.use('/api/settings', settingRoutes);
 
 // Global Error Handler
 app.use(errorHandler);

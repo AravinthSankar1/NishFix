@@ -311,4 +311,115 @@ export class GoogleDriveService {
       };
     }
   }
+
+  /**
+   * Upload Hero/Site Image into a dedicated "Hero Photos" folder in Google Drive
+   */
+  static async uploadHeroPhoto(params: {
+    filePath: string;
+    originalName: string;
+    mimeType?: string;
+  }): Promise<{
+    success: boolean;
+    imageUrl: string;
+    fileId: string;
+    folderId: string;
+  }> {
+    const { filePath, originalName, mimeType = 'image/jpeg' } = params;
+    const parentFolderId = this.cleanFolderId(env.GOOGLE_DRIVE_FOLDER_ID);
+    const drive = this.getDriveClient();
+
+    // 1. Find or create the dedicated "Hero Photos" folder
+    let heroFolderId: string | undefined = undefined;
+    try {
+      const folderQuery = parentFolderId
+        ? `name = 'Hero Photos' and mimeType = 'application/vnd.google-apps.folder' and '${parentFolderId}' in parents and trashed = false`
+        : `name = 'Hero Photos' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
+
+      const listRes = await drive.files.list({
+        q: folderQuery,
+        fields: 'files(id, name)',
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: true,
+      });
+
+      if (listRes.data.files && listRes.data.files.length > 0) {
+        heroFolderId = listRes.data.files[0].id!;
+      } else {
+        // Create the dedicated folder
+        const createFolderRes = await drive.files.create({
+          requestBody: {
+            name: 'Hero Photos',
+            mimeType: 'application/vnd.google-apps.folder',
+            ...(parentFolderId ? { parents: [parentFolderId] } : {}),
+          },
+          fields: 'id',
+          supportsAllDrives: true,
+        });
+        heroFolderId = createFolderRes.data.id!;
+
+        try {
+          await drive.permissions.create({
+            fileId: heroFolderId,
+            requestBody: { role: 'reader', type: 'anyone' },
+            supportsAllDrives: true,
+          });
+        } catch (_) {}
+      }
+    } catch (folderErr) {
+      console.warn('Could not locate/create Hero Photos folder, using parent folder:', folderErr);
+      heroFolderId = parentFolderId;
+    }
+
+    // 2. Upload the hero photo file into that folder
+    const fileMetadata: any = {
+      name: `Hero_Banner_${Date.now()}_${originalName}`,
+      ...(heroFolderId ? { parents: [heroFolderId] } : {}),
+    };
+
+    const media = {
+      mimeType,
+      body: fs.createReadStream(filePath),
+    };
+
+    const response = await drive.files.create({
+      requestBody: fileMetadata,
+      media,
+      fields: 'id, name, webViewLink, webContentLink',
+      supportsAllDrives: true,
+    });
+
+    const fileId = response.data.id;
+    if (!fileId) {
+      throw new Error('Failed to retrieve file ID from Google Drive for hero photo');
+    }
+
+    // 3. Make the image publicly readable so it embeds in web pages
+    try {
+      await drive.permissions.create({
+        fileId,
+        requestBody: { role: 'reader', type: 'anyone' },
+        supportsAllDrives: true,
+      });
+    } catch (permErr) {
+      console.warn('Warning: Could not set public permissions on hero photo:', permErr);
+    }
+
+    // 4. Clean up local temporary file
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    } catch (_) {}
+
+    // Direct Google CDN image embed URL (serves high-resolution web-ready image)
+    const directImageUrl = `https://lh3.googleusercontent.com/d/${fileId}`;
+
+    return {
+      success: true,
+      imageUrl: directImageUrl,
+      fileId,
+      folderId: heroFolderId || '',
+    };
+  }
 }

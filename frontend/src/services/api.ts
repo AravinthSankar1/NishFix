@@ -311,3 +311,25 @@ export const storageApi = {
     });
   },
 };
+
+// SITE SETTINGS
+export const settingsApi = {
+  getHeroImage: async (): Promise<string | null> => {
+    const res = await api.get<ApiResponse<{ imageUrl: string | null }>>('/settings/hero-image');
+    return res.data.data.imageUrl;
+  },
+  updateHeroImage: async (file: File): Promise<{ imageUrl: string; fileId: string; folderId: string }> => {
+    const formData = new FormData();
+    formData.append('image', file);
+    const res = await api.post<ApiResponse<{ imageUrl: string; fileId: string; folderId: string }>>(
+      '/settings/hero-image',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return res.data.data;
+  },
+};

@@ -98,3 +98,9 @@ model DownloadLog {
   @@index([softwareId])
   @@index([downloadedAt])
 }
+
+model SiteSetting {
+  key       String   @id
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+}

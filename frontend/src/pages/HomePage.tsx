@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { publicSoftwareApi } from '../services/api';
+import { publicSoftwareApi, settingsApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { SoftwareCard } from '../components/software/SoftwareCard';
 import { SearchBar } from '../components/software/SearchBar';
@@ -27,6 +27,9 @@ import {
   Download,
   Filter,
   Database,
+  Camera,
+  Loader2,
+  CheckCircle2,
 } from 'lucide-react';
 import technicianHero from '../assets/technician-hero.jpg';
 
@@ -96,7 +99,38 @@ export const HomePage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
+  const [isUploadingHero, setIsUploadingHero] = useState(false);
+  const [heroUploadSuccess, setHeroUploadSuccess] = useState(false);
+  const heroFileInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: heroImageUrl, refetch: refetchHeroImage } = useQuery({
+    queryKey: ['hero-image'],
+    queryFn: () => settingsApi.getHeroImage(),
+  });
+
+  const handleHeroFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file (JPG, PNG, WebP).');
+      return;
+    }
+
+    try {
+      setIsUploadingHero(true);
+      await settingsApi.updateHeroImage(file);
+      await refetchHeroImage();
+      setHeroUploadSuccess(true);
+      setTimeout(() => setHeroUploadSuccess(false), 4000);
+    } catch (err: any) {
+      alert(err?.message || 'Failed to update hero photo in Google Drive');
+    } finally {
+      setIsUploadingHero(false);
+      if (heroFileInputRef.current) heroFileInputRef.current.value = '';
+    }
+  };
 
   const handleSelectCategory = (catId: string) => {
     if (activeCategory === catId) {
@@ -214,9 +248,45 @@ export const HomePage: React.FC = () => {
             {/* Right Hero Image Card */}
             <div className="lg:col-span-5 relative mt-8 lg:mt-0 flex justify-center">
               <div className="relative w-full max-w-md rounded-3xl overflow-hidden border border-slate-700/60 bg-slate-900/80 shadow-2xl shadow-sky-950/40 p-3.5 sm:p-4 group">
+                {/* Admin Quick Edit Option to change photo into dedicated Google Drive folder */}
+                {isAdmin && (
+                  <div className="absolute top-5 right-5 z-20">
+                    <input
+                      type="file"
+                      ref={heroFileInputRef}
+                      onChange={handleHeroFileChange}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <button
+                      onClick={() => heroFileInputRef.current?.click()}
+                      disabled={isUploadingHero}
+                      className="px-3 py-1.5 rounded-full text-xs font-bold bg-slate-900/95 hover:bg-sky-600 text-sky-300 hover:text-white border border-sky-500/40 hover:border-sky-400 shadow-xl shadow-black/70 backdrop-blur-md transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      title="Upload new hero photo directly to Google Drive 'Hero Photos' folder"
+                    >
+                      {isUploadingHero ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-sky-400" />
+                          <span>Uploading to Drive...</span>
+                        </>
+                      ) : heroUploadSuccess ? (
+                        <>
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                          <span className="text-emerald-300">Saved in Drive!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Camera className="w-3.5 h-3.5 text-sky-400" />
+                          <span>Change Photo</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+
                 <div className="relative rounded-2xl overflow-hidden aspect-[3/4] max-h-[480px] w-full border border-slate-800 bg-slate-950 flex items-center justify-center">
                   <img
-                    src={technicianHero}
+                    src={heroImageUrl || technicianHero}
                     alt={`${siteConfig.brandName} – Mobile repair firmware`}
                     className="w-full h-full object-contain sm:object-cover sm:object-top group-hover:scale-102 transition-transform duration-700"
                   />
