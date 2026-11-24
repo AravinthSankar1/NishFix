@@ -1,7 +1,11 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
+// Load environment variables from both possible locations
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+dotenv.config({ path: path.resolve(process.cwd(), 'backend', '.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 export const env = {
   NODE_ENV: process.env.NODE_ENV || 'development',
